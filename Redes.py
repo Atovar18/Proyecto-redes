@@ -39,5 +39,15 @@ desfa=np.array (V_fuente.iloc[:, 3])                        #Escogemos la column
 ang = (desfa * w)                                           #Calculamos el wt que usaremos para el angulo de desfasaje.
 
 
-Vrms = ( V_nominal / np.sqrt(2), 4)
+Vrms = np.array (V_nominal / np.sqrt(2))                    #Calculo del Vrms pero con dudas sobre todos los decimales.
+for i in range (len(Vrms)):
+    Vrms [i] = round (Vrms [i], 4)                          #Aprroximamos Vrms a 4 decimales.    
+
+V_fasorial = Vrms * (np.cos(ang)) + np.complex_(Vrms * np.sin(ang) * 1j) 
+V_fasorial = np.round(V_fasorial, 4)                        #Aproximamos el V en su forma rentangular a 4 decimales.
+
 print (Vrms)
+print ()
+print (ang)
+print ()
+print (V_fasorial)
