@@ -2,6 +2,11 @@ import pandas as pd
 import numpy as np
 import math, sys, openpyxl
 from decimal import Decimal 
+
+ListZcap = []
+ListZinduc = []
+ListResistencias = []
+
 datos = open("C:/Users/Usuario/Desktop/Hola mundo/Proyecto-redes/data_io_copia.xlsx")
 
 #almcenamos las paginas de la tabla de excel
@@ -26,13 +31,16 @@ else: #si la frecuencia no es 60, entonces se calcula manualmente el valor de w 
 
 capacitores = np.array(V_fuente.iloc[:,25])                 #Escogemos la columna de los capacitores del archivo.
 
-Zcap = (-1/(w*(capacitores*(10**-6))))                      #Calculamos las imperancias de los capacitores.
+Zcap = ((-1/(w*(capacitores*(10**-6)))))*1j                 #Calculamos las imperancias de los capacitores.
+ListZcap.append (Zcap)
 
 inductores=np.array (V_fuente.iloc[:, 5])                   #Escogemos la columna de los inductores del archivo.
 
 Zinduc = (w*(inductores*(10**-3)))                          #Calculamos las imperancias de los inductores.
+ListZinduc.append(Zinduc)
 
 resistencias=np.array (V_fuente.iloc[:, 4])                 #Escogemos la columna de las resistencias.
+ListResistencias.append (resistencias)
 
 desfa=np.array (V_fuente.iloc[:, 3])                        #Escogemos la columna para del tiempo de desfasaje.
 
@@ -46,8 +54,21 @@ for i in range (len(Vrms)):
 V_fasorial = Vrms * (np.cos(ang)) + np.complex_(Vrms * np.sin(ang) * 1j) 
 V_fasorial = np.round(V_fasorial, 4)                        #Aproximamos el V en su forma rentangular a 4 decimales.
 
-print (Vrms)
+
+busi = np.array(V_fuente.iloc[:, 2])
+for i in range (1 ,len(busi)):
+    for z in range (i + 1, len(busi)):
+        if busi [i] == busi [z]:
+            casa = resistencias [i] + resistencias [z]
+            np.delete(resistencias (i, z))
+            ListResistencias.insert (i , casa)
+            Zcap = Zcap [i] + Zcap [z]
+            print (Zcap)
+            ListZcap.append (Zcap)
+            Zinduc = Zinduc [i] + Zinduc [z]
+            ListZinduc.append(Zinduc) 
+print (ListZcap)
 print ()
-print (ang)
+print (ListZinduc)
 print ()
-print (V_fasorial)
+print (ListResistencias)
