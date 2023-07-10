@@ -29,18 +29,19 @@ else: #si la frecuencia no es 60, entonces se calcula manualmente el valor de w 
     w = round(2 * math.pi * F_and[1][0], 4)
 
 
-capacitores = np.array(V_fuente.iloc[:,25])                 #Escogemos la columna de los capacitores del archivo.
+capacitores = np.array(V_fuente["Cf (uF)"])                 #Escogemos la columna de los capacitores del archivo.
 
-Zcap = ((-1/(w*(capacitores*(10**-6)))))*1j                 #Calculamos las imperancias de los capacitores.
-ListZcap.append (Zcap)
-
+Zcap = ((-1/(w*(capacitores*(10**-6)))))                    #Calculamos las imperancias de los capacitores.
+ListZcap.extend (Zcap)
+print (ListZcap, "prueba")
+print ()
 inductores=np.array (V_fuente.iloc[:, 5])                   #Escogemos la columna de los inductores del archivo.
 
 Zinduc = (w*(inductores*(10**-3)))                          #Calculamos las imperancias de los inductores.
-ListZinduc.append(Zinduc)
+ListZinduc.extend(Zinduc)
 
 resistencias=np.array (V_fuente.iloc[:, 4])                 #Escogemos la columna de las resistencias.
-ListResistencias.append (resistencias)
+ListResistencias.extend(resistencias)
 
 desfa=np.array (V_fuente.iloc[:, 3])                        #Escogemos la columna para del tiempo de desfasaje.
 
@@ -54,21 +55,35 @@ for i in range (len(Vrms)):
 V_fasorial = Vrms * (np.cos(ang)) + np.complex_(Vrms * np.sin(ang) * 1j) 
 V_fasorial = np.round(V_fasorial, 4)                        #Aproximamos el V en su forma rentangular a 4 decimales.
 
+print (ListZcap , "casa")
+print ()
+print ()
 
-busi = np.array(V_fuente.iloc[:, 2])
-for i in range (1 ,len(busi)):
+busi = np.array(V_fuente.iloc[:, 0])
+for i in range (0 ,len(busi)):
     for z in range (i + 1, len(busi)):
         if busi [i] == busi [z]:
-            casa = resistencias [i] + resistencias [z]
-            np.delete(resistencias (i, z))
-            ListResistencias.insert (i , casa)
-            Zcap = Zcap [i] + Zcap [z]
-            print (Zcap)
-            ListZcap.append (Zcap)
-            Zinduc = Zinduc [i] + Zinduc [z]
-            ListZinduc.append(Zinduc) 
+            print (busi)
+            #np.delete (ListResistencias,i)   
+            casa = [resistencias [i] + resistencias [z]]
+            ListResistencias.pop(busi[i])
+            ListResistencias.pop(busi[z])
+            ListResistencias.extend (casa)
+            if busi[i] == busi[z]:
+                Zc = [Zcap[i] + Zcap[z]]
+                ListZcap.pop(busi[i])
+                ListZcap.pop(busi[z])
+                ListZcap.extend(Zc) 
+                if busi[i] == busi[z]:
+                    Zinducx = Zinduc[i] + Zinduc[z]
+                    ListZinduc.pop(busi[i])
+                    ListZinduc.pop(busi[z])
+                    if isinstance(Zinducx, np.float64):
+                        ListZinduc.extend([Zinducx])
+                    else:
+                        ListZinduc.extend(Zinducx)
+print (ListResistencias)
+print ()
 print (ListZcap)
 print ()
-print (ListZinduc)
 print ()
-print (ListResistencias)
