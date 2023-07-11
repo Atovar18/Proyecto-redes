@@ -53,13 +53,11 @@ capacitores = np.array(V_fuente.iloc[:, 25])                 #Escogemos la colum
 Zcap = ((-1/(w*(capacitores*(10**-6)))*1j))                  #Calculamos las imperancias de los capacitores.
 Zcap = np.round (Zcap, 4)
 ListZcap.extend (Zcap)
-print (ListZcap)
 
-print ()
+
 inductores=np.array (V_fuente.iloc[:, 5])                   #Escogemos la columna de los inductores del archivo.
 Zinduc = (w*(inductores*(10**-3))*1j)                       #Calculamos las imperancias de los inductores.
 ListZinduc.extend(Zinduc)
-print (ListZinduc)
 
 resistencias=np.array (V_fuente["Rf (ohms)"])                 #Escogemos la columna de las resistencias.
 ListResistencias.extend(resistencias)
@@ -179,18 +177,12 @@ Historia = np.array(Z["R (ohms)"])                           #Selecionamos la en
 ElemenResis.extend (Historia)
 
 Historiainducn = np.array (Z ["L (uH)"])                     #Selecionamos la entrada de los elementos inductivos y guardamos en una lista.
-Historiainduc = (w * Historiainducn)*1j
+Historiainduc = ((w * Historiainducn))*1j
 Elemeninduc.extend (Historiainduc)
 
 Historiacapn = np.array (Z ["C (uF)"])                       #Ssleccionamos la entrada de los elementos capacitivos y guardamos en una lista.
 Historiacap = (-1/((w*(Historiacapn)*(10**-6))))*1j
 Elemencapaci.extend (Historiacap)
-
-def paralelo(R1, R2):                                        #Mausquerramienta misteriosa para sacar los paralelos.
-    """
-    Calcula el valor del paralelo de dos resistencias.
-    """
-    return 1 / (1 / R1 + 1 / R2)
 
 Busis = np.array(Z ["Bus i"])
 Busisj = np.array (Z ["Bus j"])
@@ -198,17 +190,26 @@ for p, k in combinations (range(len(Busis)),2):              #Comaparamos las co
     if Busis [p] == Busis [k]:
         for g, j in combinations(range (len (Busisj)),2):
             if Busisj[g] == Busisj [j]:
-                print ("Hay paralelo") 
-                Resisequivalparal = paralelo (ElemenResis [p], ElemenResis [j])
-                del ElemenResis[Busis[k]]
+                Resisequivalparal = (1/(1/ElemenResis[g] + 1/ElemenResis [j])) 
+                (ElemenResis [p], ElemenResis [j])
+                del ElemenResis[Busis[p]]
                 del ElemenResis[Busis [j]]
-                ElemenResis.insert (p ,Resisequivalparal)
-                Inducequivalparal = paralelo (Elemeninduc[p], Elemeninduc [j])
-                Elemeninduc.insert (p, Inducequivalparal)
-                Capequivalparal = paralelo (Elemencapaci [p], Elemencapaci [j])
-                Elemencapaci.insert (p, Capequivalparal)
+                ElemenResis.insert (p ,Resisequivalparal)  
+                Inducequivalparal = (1/(1/Elemeninduc[g] + 1/Elemeninduc [j])) 
+                del Elemeninduc[Busis[p]]
+                del Elemeninduc[Busis[k]]
+                Elemeninduc.append ([Inducequivalparal])
+                prueba10 = Elemeninduc.pop ()
+                Elemeninduc.insert (p , Inducequivalparal)
+                Capequivalparal = (1/(1/Elemencapaci[g] + 1/Elemencapaci [j])) 
+                del Elemencapaci[Busis[p]]
+                del Elemencapaci[Busis [j]]
+                Elemencapaci.extend([Capequivalparal])
+                prueba9 = Elemencapaci.pop ()
+                Elemencapaci.insert (p, prueba9)
+            
 
-                                    
+                                 
 #Llamamos las listas ListResistencias, ListZcap, ListZinduc para calcular las Z del generador calcular las corrientes inyectadas por las fuentes de voltaje.
 Zgen = np.sum((ListResistencias,ListZcap, ListZinduc,),axis=0)  
 Iinyectadas = np.divide (SeriesFv,Zgen)
@@ -219,4 +220,9 @@ Iinyectadas = np.round (Iinyectadas, 4)
 Zigen = np.sum((ListResistencias_I,ListZcap_I, ListZinduc_I),axis=0)  
 Ifinyectadas = np.divide (SeriesFi,Zigen)
 Ifinyectadas = np.round (Ifinyectadas, 4)
+
+#Llamamos las listas Elemncapaci, Elemeninduc, Elemenresis para calcular las Z de los elementos conectados al circuito.
+Zelement = np.sum ((Elemencapaci, Elemeninduc, ElemenResis) ,axis = 0)
+print (Zelement)
+
 
