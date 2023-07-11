@@ -186,7 +186,6 @@ Elemencapaci.extend (Historiacap)
 
 Busis = np.array(Z ["Bus i"])
 Busisj = np.array (Z ["Bus j"])
-print (Elemeninduc)
 for p, k in combinations (range(len(Busis)),2):              #Comaparamos las columnas de Bus i y Bus j, en busca de elementos en paralelos.
     if Busis [p] == Busis [k]:
         for g, j in combinations(range (len (Busisj)),2):
@@ -208,21 +207,6 @@ for p, k in combinations (range(len(Busis)),2):              #Comaparamos las co
                 Elemencapaci.extend([Capequivalparal])
                 prueba9 = Elemencapaci.pop ()
                 Elemencapaci.insert (p, prueba9)
-
-
-Busisnodos = np.append(Busis, Busisj)
-busjnodos = np.append(busii, busi)
-busto = np.append(Busisnodos, busjnodos)
-nodos = np.unique (Busisnodos)
-if nodos[0] == 0:
-    c = len(nodos) -1
-else:
-     c = len(nodos)
-
-if c == k:
-     print ("La matriz tiene tamaño" , c)
-else:
-     print ("Pega un warnign")
             
 
                                  
@@ -232,7 +216,6 @@ Iinyectadas = np.divide (SeriesFv,Zgen)
 Iinyectadas = np.round (Iinyectadas, 4)
 
 
-
 #Llamamos las listas ListResistencias, Listcap, ListZinduc para calcular las Z de las fuentes de corrientes hacia el circuito.
 Zigen = np.sum((ListResistencias_I,ListZcap_I, ListZinduc_I),axis=0)  
 Ifinyectadas = np.divide (SeriesFi,Zigen)
@@ -240,5 +223,6 @@ Ifinyectadas = np.round (Ifinyectadas, 4)
 
 #Llamamos las listas Elemncapaci, Elemeninduc, Elemenresis para calcular las Z de los elementos conectados al circuito.
 Zelement = np.sum ((Elemencapaci, Elemeninduc, ElemenResis) ,axis = 0)
+print (Zelement)
 
 
