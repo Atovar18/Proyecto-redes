@@ -48,14 +48,18 @@ else: #si la frecuencia no es 60Hz, entonces se calcula manualmente el valor de 
     w = round(2 * math.pi * F_and[1][0], 4)
 
 #Hoja 2.
-capacitores = np.array(V_fuente["Cf (uF)"])                 #Escogemos la columna de los capacitores del archivo.
+capacitores = np.array(V_fuente.iloc[:, 25])                 #Escogemos la columna de los capacitores del archivo.
 
-Zcap = ((-1/(w*(capacitores*(10**-6)))))                  #Calculamos las imperancias de los capacitores.
+Zcap = ((-1/(w*(capacitores*(10**-6)))*1j))                  #Calculamos las imperancias de los capacitores.
+Zcap = np.round (Zcap, 4)
 ListZcap.extend (Zcap)
+print (ListZcap)
 
+print ()
 inductores=np.array (V_fuente.iloc[:, 5])                   #Escogemos la columna de los inductores del archivo.
-Zinduc = (w*(inductores*(10**-3)))                        #Calculamos las imperancias de los inductores.
+Zinduc = (w*(inductores*(10**-3))*1j)                       #Calculamos las imperancias de los inductores.
 ListZinduc.extend(Zinduc)
+print (ListZinduc)
 
 resistencias=np.array (V_fuente["Rf (ohms)"])                 #Escogemos la columna de las resistencias.
 ListResistencias.extend(resistencias)
@@ -99,9 +103,9 @@ for i, z in combinations(range(len(busi)), 2):             #Hacemos que lea todo
                     Prueba5 = ListZinduc.pop ()
                     ListZinduc.insert (i, Prueba5)
                 else:
-                    ListZinduc.extend(Zinducx)
-                    Prueba5 = ListZinduc.pop ()
-                    ListZinduc.insert (i, Prueba5)
+                    ListZinduc.extend([Zinducx]) 
+                    Prueba6 = ListZinduc.pop ()
+                    ListZinduc.insert (i, Prueba6)
 for i,z in combinations (range(len(busi)), 2):
                     if busi [i] == busi [z]:
                         paralv = [V_fasorial [i] + V_fasorial [z]]     #Sumamos la fuentes de voltaje que estan en series.
@@ -110,10 +114,6 @@ for i,z in combinations (range(len(busi)), 2):
                         SeriesFv.extend (paralv)
                         prueba4 = SeriesFv.pop()
                         SeriesFv.insert(i, prueba4)
-
-Zgen = np.sum((ListResistencias,ListZcap, ListZinduc,),axis=0)  
-Iinyectadas = np.divide (SeriesFv,Zgen)
-Iinyectadas = np.round (Iinyectadas, 4)
                         
 
 #Hoja 3.
@@ -155,32 +155,23 @@ for i, z in combinations(range(len(busii)), 2):              #operacion para ele
             Zc_I = [Zcapi [i] + Zcapi[z]]
             del ListZcap_I[busii[i]]
             del ListZcap_I[busii[z]-1]
-            ListZcap_I.insert (i, Zc_I)
+            ListZcap_I.extend (Zc_I)
+            prueba7 = ListZcap_I.pop()
+            ListZcap_I.insert (i, prueba7)
             if busii[i] == busii[z]:                         #Repetimos el proceso para los inductores.
                 Zinduc_i = Zinduc[i] + Zinduc[z]
                 del ListZinduc_I [busii[i]]
                 del ListZinduc_I[busii[z]-1]
                 ListZinduc_I.insert (i , Zinduc_i)
-            
+
 for b, t in combinations(range(len(busii)), 2):              #Operacion para fuente de corrientes en series.
     if busii [b] == busii [t]:                               
             paralI = [I_fasorial [b] + I_fasorial [t]]       #Juntamos la fuentes de corrientes en series y agregamos a final de la lista.
             del SeriesFi [busii [b]]
             del SeriesFi [busii [t]-1]
-            SeriesFi.insert(i, paralI)
-
-print (ListResistencias_I)
-print()
-print (ListZcap_I)
-print ()
-print (ListZinduc_I)
-
-Zigen = np.sum((ListResistencias_I,ListZcap_I,),axis=0)  
-Ifinyectadas = np.divide (SeriesFi,Zigen)
-Ifinyectadas = np.round (Ifinyectadas, 4)
-
-print (Ifinyectadas)
-print ()
+            SeriesFi.extend(paralI)
+            prueba8 = SeriesFi.pop ()
+            SeriesFi.insert (i, prueba8)
 
 #Hoja4.
 
@@ -218,15 +209,14 @@ for p, k in combinations (range(len(Busis)),2):              #Comaparamos las co
                 Elemencapaci.insert (p, Capequivalparal)
 
                                     
-#Llamamos las listas ListResistencias, ListZcap, ListZinduc para calcular las Z del generador calcular las corrientes inyectadas.
+#Llamamos las listas ListResistencias, ListZcap, ListZinduc para calcular las Z del generador calcular las corrientes inyectadas por las fuentes de voltaje.
+Zgen = np.sum((ListResistencias,ListZcap, ListZinduc,),axis=0)  
+Iinyectadas = np.divide (SeriesFv,Zgen)
+Iinyectadas = np.round (Iinyectadas, 4)
 
 
+#Llamamos las listas ListResistencias, Listcap, ListZinduc para calcular las Z de las fuentes de corrientes hacia el circuito.
+Zigen = np.sum((ListResistencias_I,ListZcap_I, ListZinduc_I),axis=0)  
+Ifinyectadas = np.divide (SeriesFi,Zigen)
+Ifinyectadas = np.round (Ifinyectadas, 4)
 
-print (ListResistencias)
-
-print (np.shape(ListResistencias), "tamanno resistencias")
-
-print ()
-
-print (ListZcap)
-print (np.shape(ListZcap) , "tamaño listzcap")
