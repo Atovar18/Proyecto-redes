@@ -50,14 +50,14 @@ else: #si la frecuencia no es 60Hz, entonces se calcula manualmente el valor de 
 #Hoja 2.
 capacitores = np.array(V_fuente["Cf (uF)"])                 #Escogemos la columna de los capacitores del archivo.
 
-Zcap = ((-1/(w*(capacitores*(10**-6)))))*1j                    #Calculamos las imperancias de los capacitores.
+Zcap = ((-1/(w*(capacitores*(10**-6)))))                  #Calculamos las imperancias de los capacitores.
 ListZcap.extend (Zcap)
 
 inductores=np.array (V_fuente.iloc[:, 5])                   #Escogemos la columna de los inductores del archivo.
-Zinduc = (w*(inductores*(10**-3)))*1j                          #Calculamos las imperancias de los inductores.
+Zinduc = (w*(inductores*(10**-3)))                        #Calculamos las imperancias de los inductores.
 ListZinduc.extend(Zinduc)
 
-resistencias=np.array (V_fuente.iloc[:, 4])                 #Escogemos la columna de las resistencias.
+resistencias=np.array (V_fuente["Rf (ohms)"])                 #Escogemos la columna de las resistencias.
 ListResistencias.extend(resistencias)
 
 desfa=np.array (V_fuente.iloc[:, 3])                        #Escogemos la columna para del tiempo de desfasaje.
@@ -70,38 +70,51 @@ for i in range (len(Vrms)):
     Vrms [i] = round (Vrms [i], 4)                          #Aproximamos Vrms a 4 decimales.    
 
 V_fasorial = Vrms * (np.cos(ang)) + np.complex_(Vrms * np.sin(ang) * 1j) 
+V_fasorial = np.complex_(V_fasorial)
 V_fasorial = np.round(V_fasorial, 4)                        #Aproximamos el V en su forma rentangular a 4 decimales.
 
 SeriesFv.extend (V_fasorial)
-
-print (ListZcap)
-print ()
-
-
-busi = np.array(V_fuente.iloc[:, 0])
+busi = np.array(V_fuente["Bus i"])
 for i, z in combinations(range(len(busi)), 2):             #Hacemos que lea todos la columna de busi, para determinar los nodos en series.
     if busi[i] == busi[z]:
-        casa = [resistencias[i] + resistencias[z]]         #Sumamos los terminos en series.
+        casa = [ListResistencias[i] + ListResistencias[z]]         #Sumamos los terminos en series.
         del ListResistencias[busi[i]] 
         del ListResistencias[busi[z]-1]
-        ListResistencias.insert (i, casa)                  #Agregamos estos valores a la lista de resistenciias y eliminamos los elemntos sumados
-        print (ListResistencias)
-
-
+        ListResistencias.extend (casa)
+        prueba1 = ListResistencias.pop ()
+        ListResistencias.insert (i, prueba1)                  #Agregamos estos valores a la lista de resistenciias y eliminamos los elemntos sumados
+        if busi[i] == busi[z]:                             #Repetimos el proceso para los capacitores.
+            Zc = [Zcap[i] + Zcap[z]]
+            del ListZcap[busi[i]]
+            del ListZcap[busi[z]-1]
+            ListZcap.extend (Zc)
+            prueba2 = ListZcap.pop ()
+            ListZcap.insert(i, prueba2)
+            if busi[i] == busi[z]:
+                Zinducx = Zinduc[i] + Zinduc[z]
+                del ListZinduc[busi[i]]
+                del ListZinduc[busi[z]-1]
+                if isinstance(Zinducx, np.float64):
+                    ListZinduc.extend([Zinducx])
+                    Prueba5 = ListZinduc.pop ()
+                    ListZinduc.insert (i, Prueba5)
+                else:
+                    ListZinduc.extend(Zinducx)
+                    Prueba5 = ListZinduc.pop ()
+                    ListZinduc.insert (i, Prueba5)
 for i,z in combinations (range(len(busi)), 2):
-    if busi [i] ==busi [z]:
-            paralv = [V_fasorial [i] + V_fasorial [z]]     #Sumamos la fuentes de voltaje que estan en series.
-            del SeriesFv [busi [i]]
-            del SeriesFv [busi [z]-1]
-            SeriesFv.extend (paralv)
-            prueba4 = SeriesFv.pop()
-            SeriesFv.insert(i, prueba4) 
-                        
-#Llamamos las listas ListResistencias, ListZcap, ListZinduc para calcular las Z del generador calcular las corrientes inyectadas.
+                    if busi [i] == busi [z]:
+                        paralv = [V_fasorial [i] + V_fasorial [z]]     #Sumamos la fuentes de voltaje que estan en series.
+                        del SeriesFv [busi [i]]
+                        del SeriesFv [busi [z]-1]
+                        SeriesFv.extend (paralv)
+                        prueba4 = SeriesFv.pop()
+                        SeriesFv.insert(i, prueba4)
 
 Zgen = np.sum((ListResistencias,ListZcap, ListZinduc,),axis=0)  
 Iinyectadas = np.divide (SeriesFv,Zgen)
 Iinyectadas = np.round (Iinyectadas, 4)
+                        
 
 #Hoja 3.
 
@@ -129,7 +142,6 @@ I_fasorial = Irms * (np.cos(wt_i)) + np.complex_(Irms * np.sin(wt_i) * 1j)
 I_fasorial = np.round(I_fasorial, 4)                        #Aproximamos el I en su forma rentangular a 4 decimales.
 SeriesFi.extend (I_fasorial)
 
-
 busii = np.array(I_fuente["Bus i"])
 for i, z in combinations(range(len(busii)), 2):              #operacion para elementos en series I_Fuente.
     if busii[i] == busii[z]:
@@ -149,9 +161,7 @@ for i, z in combinations(range(len(busii)), 2):              #operacion para ele
                 del ListZinduc_I [busii[i]]
                 del ListZinduc_I[busii[z]-1]
                 ListZinduc_I.insert (i , Zinduc_i)
-                
-
-
+            
 for b, t in combinations(range(len(busii)), 2):              #Operacion para fuente de corrientes en series.
     if busii [b] == busii [t]:                               
             paralI = [I_fasorial [b] + I_fasorial [t]]       #Juntamos la fuentes de corrientes en series y agregamos a final de la lista.
@@ -207,15 +217,16 @@ for p, k in combinations (range(len(Busis)),2):              #Comaparamos las co
                 Capequivalparal = paralelo (Elemencapaci [p], Elemencapaci [j])
                 Elemencapaci.insert (p, Capequivalparal)
 
-
-def corrientesinyectadas (Zequi, Vgen):
-    """
-    calcula el valor de las corrientes inyectadas.
-    """
-
-
-       
+                                    
+#Llamamos las listas ListResistencias, ListZcap, ListZinduc para calcular las Z del generador calcular las corrientes inyectadas.
 
 
 
+print (ListResistencias)
 
+print (np.shape(ListResistencias), "tamanno resistencias")
+
+print ()
+
+print (ListZcap)
+print (np.shape(ListZcap) , "tamaño listzcap")
