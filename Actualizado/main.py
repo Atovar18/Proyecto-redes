@@ -6,12 +6,11 @@ import potencia
 import compensadores
 
 
-df_gen = pd.read_excel("C:\\Users\\Usuario\\Desktop\\Hola mundo\\Proyecto-redes\\rEscAtA sIstEmAs\\data_io.xlsx","GENERATION")                 #
-df_lines = pd.read_excel("C:\\Users\\Usuario\\Desktop\\Hola mundo\\Proyecto-redes\\rEscAtA sIstEmAs\\data_io.xlsx","LINES")                    #
-df_load = pd.read_excel("C:\\Users\\Usuario\\Desktop\\Hola mundo\\Proyecto-redes\\rEscAtA sIstEmAs\\data_io.xlsx","LOAD")                      #
-df_vnom = pd.read_excel("C:\\Users\\Usuario\\Desktop\\Hola mundo\\Proyecto-redes\\rEscAtA sIstEmAs\\data_io.xlsx", "V_NOM")                    #
-df_comp = pd.read_excel("C:\\Users\\Usuario\\Desktop\\Hola mundo\\Proyecto-redes\\rEscAtA sIstEmAs\\data_io.xlsx", "REACTIVE_COMP")            #
-
+df_gen = pd.read_excel("C:\\Users\\Usuario\\Desktop\\Hola mundo\\Sistema\\Proyecto-redes\\Actualizado\\data_io.xlsx","GENERATION")                 #
+df_lines = pd.read_excel("C:\\Users\\Usuario\\Desktop\\Hola mundo\\Sistema\\Proyecto-redes\\Actualizado\\data_io.xlsx","LINES")                    #
+df_load = pd.read_excel("C:\\Users\\Usuario\\Desktop\\Hola mundo\\Sistema\\Proyecto-redes\\Actualizado\\data_io.xlsx","LOAD")                      #
+df_vnom = pd.read_excel("C:\\Users\\Usuario\\Desktop\\Hola mundo\\Sistema\\Proyecto-redes\\Actualizado\\data_io.xlsx", "V_NOM")                    #
+df_comp = pd.read_excel("C:\\Users\\Usuario\\Desktop\\Hola mundo\\Sistema\\Proyecto-redes\\Actualizado\\data_io.xlsx", "REACTIVE_COMP")            #
 
 
 #N° de barras del SEP
