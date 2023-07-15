@@ -50,7 +50,7 @@ p_shunt = np.array(df_lines.iloc[:,7])                          #admitancia del 
 Long = np.array(df_lines.iloc[:,4])                             #largo de las lineas
 Linea_Barra_i = np.array(df_lines.iloc[:,0])                        #Barra de conexion i
 Linea_Barra_j = np.array(df_lines.iloc[:,1])                        #Barra de conexion j
-LineaxD = np.concatenate(([Linea_Barra_i],[Linea_Barra_j]))     #Matriz de conexion de las cargas
+LineaxD = np.concatenate(([Linea_Barra_i],[barra_linea_j]))     #Matriz de conexion de las cargas
 LineaxD = np.transpose(LineaxD)
 
 
@@ -59,7 +59,17 @@ LineaxD = np.transpose(LineaxD)
 Voltaje_n = float(df_vnom.iloc[0,1])                                      #Voltaje nom
 Voltaje_max = float(df_vnom.iloc[0,3])                                    #Voltaje máx COVENIN 159
 Voltaje_min = float(df_vnom.iloc[0,2])                                    #Voltaje mín COVENIN 159
-
+#Warning:
+if Voltaje_n<0 or Voltaje_min<0 or Voltaje_max<0:
+    mensaje= "Valor negativo"
+    print("\n[*] Error 159: Valor de datos ingresados no es reconocido")
+    print("\tRevisar la casilla warning del excel __data_io.xlsx__ en la hoja V_NOM\n")
+    sys.exit(-1)
+elif df_vnom.iloc[0,1:4].isnull().sum() > 0:
+    mensaje = "Casilla vacia"
+    print("\n[*] Error 159: Valor de datos ingresados no es reconocido")
+    print("\tRevisar la casilla warning del excel __data_io.xlsx__ en la hoja V_NOM\n")
+    sys.exit(-1)
         
 #COMPENSADORES
 Barra_p_compensador_i = np.array(df_comp.iloc[:,0])
@@ -85,7 +95,7 @@ def run():
 
     #Lineas
     ZP_L, y_shunt = impedancia.linea(Linea_resist,Linea_react,Long, p_shunt)
-    linea = np.concatenate(([Linea_Barra_i],[Linea_Barra_j],[ZP_L]),axis=0)      
+    linea = np.concatenate(([Linea_Barra_i],[Linea_Barra_j],[imp_linea]),axis=0)      
     linea = np.transpose(linea)
     
     linea_d = np.concatenate(([Linea_resist],[Linea_react]),axis=0)
@@ -94,21 +104,21 @@ def run():
     y_comp, barra_bus = impedancia.compensadores(Compensador_X,Barra_p_compensador_i,Compensador_type)     #compensadores
 
 
-    Iny_corrientes = impedancia.corrientes(Voltaje,Teta,ZP_g,Numero_Barras, G_barra_i)
+    Iny_corrientes = impedancia.corrientes(voltaje,teta,ZP_g,Numero_Barras, barra_gen_i)
 
     Y_bus = ybus.ybus(Gzp, carga, linea, Numero_Barras,Linea_Barra_i,Linea_Barra_j,y_shunt, Long)
     Y_bus = np.round(Y_bus,4)
 
     Zth, Zbus = ybus.Zth(Y_bus)
     Vth,Vth_rect = ybus.Vth(Zbus,Iny_corrientes,Numero_Barras)
-    g_bus = ybus.gbus(Y_bus,Numero_Barras)
-    b_bus = ybus.bbus(Y_bus,Numero_Barras)
+    g_bus = ybus.gbus(y_bus,Numero_Barras)
+    b_bus = ybus.bbus(y_bus,Numero_Barras)
 
 
     compe1, compe2 = compensadores.test_compen(Vth, Voltaje_max, Voltaje_max, Numero_Barras, Voltaje_n)
 
- 
-    verificador = list(filter(lambda x: 'CAP' in x, compe2))                                                       #revisa si se necesita compesacion
+ #comprobando si se necesita compensar
+    verificador = list(filter(lambda x: 'CAP' in x, compe2))
     verificador2 = list(filter(lambda x: 'IND' in x, compe2))
     print(verificador)
     print(verificador2)
