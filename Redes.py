@@ -17,6 +17,7 @@ ListResistencias_I = []
 ListZcap_I = []
 ListZinduc_I = []
 SeriesFi = []
+Zcapi = []
 
 #Listas usadas - pagina4.
 
@@ -39,7 +40,6 @@ Balance_S = pd.read_excel("C:/Users/Usuario/Desktop/Hola mundo/Proyecto-redes/da
 # Ordenamos las filas por la primera columna para ordenar los nodos y la almacenamos de nuevos en las mismas variables.
 
 Z = Z.sort_values(by=Z.columns[0]).reset_index(drop=True)
-print (Z)
 V_fuente = V_fuente.sort_values(by=V_fuente.columns[0]).reset_index(drop=True)
 I = I_fuente.sort_values(by=I_fuente.columns[0]).reset_index(drop=True)
 
@@ -129,9 +129,16 @@ DatosResistencias_I = np.array (I_fuente["Rf (ohms)"])          #Seleccionamos l
 ListResistencias_I.extend (DatosResistencias_I)
 
 datoscapacitores_I = np.array (I_fuente ["Cf (uF)"])       #Selecionamos los capacitores y calculamos sus imperancias.
-Zcapi = (-1 / (w*((datoscapacitores_I)*(10**-6))))*1j
-Zcapi = np.round (Zcapi, 4)         
-ListZcap_I.extend (Zcapi)                                  #Guardamos en una lista.
+
+
+for cap in datoscapacitores_I:
+     if cap == 0:
+          Zcapi = 0
+     else:
+          Zcapi = (-1 / (w*((datoscapacitores_I)*(10**-6))))*1j 
+          Zcapi = np.round (Zcapi, 4)         
+ListZcap_I.extend (Zcapi)                                   #Guardamos en una lista.
+
 
 datosinductores_I = np.array (I_fuente ["Lf (mH)"])        #Selecionamos los inductores y calculamos sus imperancias. 
 Zinduc_I = (w * (datosinductores_I)*(10**-3))*1j
@@ -191,7 +198,13 @@ historia_induc.extend((w *(((l))*10**-6))*1j)
 historia_induc = np.round (historia_induc, 4)
 
 c = np.array(Z["C (uF)"])
-historia_capa.extend(-1j / (w*(c*(10**-6))))
+for cap in c:
+     if cap == 0:
+          historia_capa.append(0)
+     else:
+          historia_capa.append(-1j / (w*(cap*(10**-6))))
+
+historia_capa = np.array(historia_capa)
 historia_capa = np.round (historia_capa, 4)
 
 bus_i = np.array(Z["Bus i"])
@@ -203,19 +216,22 @@ for i, j in combinations(range(len(bus_i)), 2):
 
         #Calculamos la o las resistencias en paralelo.
         
+        historia_resis = np.where(historia_resis == 0, 1e+15, historia_resis)
         HellomotoRE = (1/(1/historia_resis [j] + 1/historia_resis [i]))
-        historia_resis.pop (i)                                                                  #Eliminamos las resistencias utilizadas para el paralelo.
-        historia_resis.pop (j)
-        historia_resis.insert (i , HellomotoRE)                                                 #Agregamos el resultados de la resistencia en paralelo en la lista de las resistencias.
+        historia_resis = np.delete (historia_resis, [i , j])                                                                  #Eliminamos las resistencias utilizadas para el paralelo.
+        historia_resis = np.insert (historia_resis, i , HellomotoRE)
+        historia_resis = np.round (historia_resis, 4)                                                 #Agregamos el resultados de la resistencia en paralelo en la lista de las resistencias.
 
         #Calculamos la o las inductancias en paralelo.
 
+        historia_induc = np.where(historia_induc == 0, 1e+15, historia_induc)
         NicolaInduc = (1 / (1 / historia_induc[j] + 1 / historia_induc[i]))
         historia_induc = np.delete(historia_induc, [i , j])                                     #Eliminamos las Inductancias utilizadas para calcular el paralelo.
         historia_induc = np.insert(historia_induc, i , NicolaInduc)                             #Agregamos el resultado del paralelo en la lista de inductancias.
-        historia_induc = np.round (historia_induc, 4)    
+        historia_induc = np.round (historia_induc, 4)      
 
         #Calculemos la o las capacitancias en paralelo. 
+        historia_capa = np.where(historia_capa == 0, 1e+15, historia_capa)
         Motomami = (1 / (1 / historia_capa[j] + 1 / historia_capa[i]))
         historia_capa = np.delete(historia_capa, [i , j])                                       #Eliminamos las Inductancias utilizadas para calcular el paralelo. 
         historia_capa = np.insert(historia_capa, i , Motomami)                                  ##Agregamos el resultado del paralelo en la lista de inductancias.
@@ -224,41 +240,51 @@ for i, j in combinations(range(len(bus_i)), 2):
 Busisnodos = np.append(bus_i, bus_j)
 busjnodos = np.append(busii, busi)
 busto = np.append(Busisnodos, busjnodos)
-nodos = np.unique (Busisnodos)
+nodos = np.unique (busto)
 
 if nodos[0] == 0:
     nodos = np.delete (nodos , 0)
+
     c = len(nodos)
-    print ("toma")
-    print ()
 elif nodos [0] != 0:
      c = len(nodos)
 else:
     print ("Pega un warnign")
-            
-
-                                 
-#Llamamos las listas ListResistencias, ListZcap, ListZinduc para calcular las Z del generador calcular las corrientes inyectadas por las fuentes de voltaje.
-Zgen = np.sum((ListResistencias,ListZcap, ListZinduc,),axis=0)  
-AdmitanciasGenV = (1 / Zgen)
-AdmitanciasGenV = np.round (AdmitanciasGenV , 4)
-Iinyectadas = np.divide (SeriesFv,Zgen)
-Iinyectadas = np.round (Iinyectadas, 4)
+         
+    #Admitancias de la hoja Z
 
 
+    #Llamamos las listas ListResistencias, ListZcap, ListZinduc para calcular las Z del generador calcular las corrientes inyectadas por las fuentes de voltaje.
+    Zgen = np.sum((ListResistencias,ListZcap, ListZinduc,),axis=0)  
+    AdmitanciasGenV = (1 / Zgen)
+    AdmitanciasGenV = np.round (AdmitanciasGenV , 4)
+    Iinyectadas = np.divide (SeriesFv,Zgen)
+    Iinyectadas = np.round (Iinyectadas, 4)
 
-#Llamamos las listas ListResistencias, Listcap, ListZinduc para calcular las Z de las fuentes de corrientes hacia el circuito.
-Zigen = np.sum((ListResistencias_I,ListZcap_I, ListZinduc_I),axis=0)  
-Ifinyectadas = np.divide (SeriesFi,Zigen)
-Ifinyectadas = np.round (Ifinyectadas, 4)
-
-#Llamamos las listas Elemncapaci, Elemeninduc, Elemenresis para calcular las Z de los elementos conectados al circuito.
 
 
-AdminHistoria_Resis = 1/ np.array (historia_resis) 
-AdminHistoria_induc = 1/np.array (historia_induc)
-AdminHistoria_capa = 1/np.array (historia_capa)
-AdminHistoria_capa = np.round (AdminHistoria_capa, 4)
+    #Llamamos las listas ListResistencias, Listcap, ListZinduc para calcular las Z de las fuentes de corrientes hacia el circuito.
+    Zigen = np.sum((ListResistencias_I,ListZcap_I, ListZinduc_I),axis=0)  
+    Ifinyectadas = np.divide (SeriesFi,Zigen)
+    Ifinyectadas = np.round (Ifinyectadas, 4)
+
+    #Llamamos las listas Elemncapaci, Elemeninduc, Elemenresis para calcular las Z de los elementos conectados al circuito.
+
+    #Aqui saque las admitancias de la pagina Z
+
+    AdminHistoria_Resis = 1/ np.array (historia_resis) 
+    AdminHistoria_induc = 1/np.array (historia_induc)
+
+    # Reemplazar valores cero por 1e-15
+    historia_capa_sin_cero = np.where(historia_capa == 0, 1e+15, historia_capa)
+
+    # Aplicar la función de inversión
+    AdminHistoria_capa = 1 / historia_capa_sin_cero
+
+    AdminHistoria_capa = np.round (AdminHistoria_capa, 4)
+
+#Admitancias de 
+
 
 #PLanteamos una matriz que nula, para fabricar la nueva matriz de admitancias.
 Yelemnt = np.zeros((c, c), dtype= np.complex64)
