@@ -24,18 +24,18 @@ Zcapi = []
 historia_resis = []
 historia_induc = []
 historia_capa = []
-
-datos = open("C:/Users/Usuario/Desktop/Hola mundo/Proyecto-redes/data_io_copia.xlsx")
+#"C:\Users\Usuario\Desktop\Hola mundo\Sistema
+datos = open("C:\\Users\\Usuario\\Desktop\\Hola mundo\\Sistema\\Proyecto-redes\\data_io_copia.xlsx")
 
 #almacenamos las paginas de la tabla de excel
-F_and = pd.read_excel ("C:/Users/Usuario/Desktop/Hola mundo/Proyecto-redes/data_io_copia.xlsx" , "f_and_ouput", header= None)
-V_fuente = pd.read_excel ("C:/Users/Usuario/Desktop/Hola mundo/Proyecto-redes/data_io_copia.xlsx", "V_fuente")
-I_fuente = pd.read_excel ("C:/Users/Usuario/Desktop/Hola mundo/Proyecto-redes/data_io_copia.xlsx", "I_fuente")
-Z = pd.read_excel("C:/Users/Usuario/Desktop/Hola mundo/Proyecto-redes/data_io_copia.xlsx", "Z")
-VTH_AND_ZTH = pd.read_excel("C:/Users/Usuario/Desktop/Hola mundo/Proyecto-redes/data_io_copia.xlsx", "VTH_AND_ZTH")
-Sfuente = pd.read_excel("C:/Users/Usuario/Desktop/Hola mundo/Proyecto-redes/data_io_copia.xlsx", "Sfuente")
-S_Z = pd.read_excel("C:/Users/Usuario/Desktop/Hola mundo/Proyecto-redes/data_io_copia.xlsx", "S_Z")
-Balance_S = pd.read_excel("C:/Users/Usuario/Desktop/Hola mundo/Proyecto-redes/data_io_copia.xlsx", "V_fuente")
+F_and = pd.read_excel ("C:\\Users\\Usuario\\Desktop\\Hola mundo\\Sistema\\Proyecto-redes\\data_io_copia.xlsx" , "f_and_ouput", header= None)
+V_fuente = pd.read_excel ("C:\\Users\\Usuario\\Desktop\\Hola mundo\\Sistema\\Proyecto-redes\\data_io_copia.xlsx", "V_fuente")
+I_fuente = pd.read_excel ("C:\\Users\\Usuario\\Desktop\\Hola mundo\\Sistema\\Proyecto-redes\\data_io_copia.xlsx", "I_fuente")
+Z = pd.read_excel("C:\\Users\\Usuario\\Desktop\\Hola mundo\\Sistema\\Proyecto-redes\\data_io_copia.xlsx", "Z")
+VTH_AND_ZTH = pd.read_excel("C:\\Users\\Usuario\\Desktop\\Hola mundo\\Sistema\\Proyecto-redes\\data_io_copia.xlsx", "VTH_AND_ZTH")
+Sfuente = pd.read_excel("C:\\Users\\Usuario\\Desktop\\Hola mundo\\Sistema\\Proyecto-redes\\data_io_copia.xlsx", "Sfuente")
+S_Z = pd.read_excel("C:\\Users\\Usuario\\Desktop\\Hola mundo\\Sistema\\Proyecto-redes\\data_io_copia.xlsx", "S_Z")
+Balance_S = pd.read_excel("C:\\Users\\Usuario\\Desktop\\Hola mundo\\Sistema\\Proyecto-redes\\data_io_copia.xlsx", "V_fuente")
 
 # Ordenamos las filas por la primera columna para ordenar los nodos y la almacenamos de nuevos en las mismas variables.
 
@@ -44,6 +44,7 @@ V_fuente = V_fuente.sort_values(by=V_fuente.columns[0]).reset_index(drop=True)
 I = I_fuente.sort_values(by=I_fuente.columns[0]).reset_index(drop=True)
 
 V_nominal = np.array(V_fuente.iloc[:, 2])
+generador = np.array (V_fuente.iloc[:, 0]) 
 I_nominal = np.array(I_fuente["I pico f (A)"])
 
 
@@ -65,8 +66,8 @@ ListZcap.extend (Zcap)
 
 
 inductores=np.array (V_fuente.iloc[:, 5])                   #Escogemos la columna de los inductores del archivo.
-Zinduc = (w*(inductores*(10**-3))*1j)                       #Calculamos las imperancias de los inductores.
-ListZinduc.extend(Zinduc)
+Zinduc = (-1j / (w*(inductores*(10**-6))))                  #Calculamos las imperancias de los inductores.
+ListZinduc = np.round (Zinduc, 4)
 
 resistencias=np.array (V_fuente["Rf (ohms)"])                 #Escogemos la columna de las resistencias.
 ListResistencias.extend(resistencias)
@@ -103,16 +104,14 @@ for i, z in combinations(range(len(busi)), 2):             #Hacemos que lea todo
             ListZcap.insert(i, prueba2)
             if busi[i] == busi[z]:
                 Zinducx = Zinduc[i] + Zinduc[z]
-                del ListZinduc[busi[i]]
-                del ListZinduc[busi[z]-1]
+                ListZinduc = np.delete (ListZinduc, [i , z])  
                 if isinstance(Zinducx, np.float64):
                     ListZinduc.extend([Zinducx])
                     Prueba5 = ListZinduc.pop ()
                     ListZinduc.insert (i, Prueba5)
                 else:
-                    ListZinduc.extend([Zinducx]) 
-                    Prueba6 = ListZinduc.pop ()
-                    ListZinduc.insert (i, Prueba6)
+                    ListZinduc = np.insert (ListZinduc, i , Zinducx) 
+
 for i,z in combinations (range(len(busi)), 2):
                     if busi [i] == busi [z]:
                         paralv = [V_fasorial [i] + V_fasorial [z]]     #Sumamos la fuentes de voltaje que estan en series.
@@ -130,17 +129,15 @@ ListResistencias_I.extend (DatosResistencias_I)
 
 datoscapacitores_I = np.array (I_fuente ["Cf (uF)"])       #Selecionamos los capacitores y calculamos sus imperancias.
 
-
-for cap in datoscapacitores_I:
-     if cap == 0:
-          Zcapi = 0
-     else:
-          Zcapi = (-1 / (w*((datoscapacitores_I)*(10**-6))))*1j 
-          Zcapi = np.round (Zcapi, 4)         
-ListZcap_I.extend (Zcapi)                                   #Guardamos en una lista.
+datoscapacitores_I = np.where(datoscapacitores_I == 0, 1e+15, datoscapacitores_I)
+Zcapi = (-1 / (w*((datoscapacitores_I)*(10**-6))))*1j 
+print (Zcapi)
+Zcapi = np.round (Zcapi, 4)         
+ListZcap_I.append (Zcapi)                                   #Guardamos en una lista.
 
 
 datosinductores_I = np.array (I_fuente ["Lf (mH)"])        #Selecionamos los inductores y calculamos sus imperancias. 
+
 Zinduc_I = (w * (datosinductores_I)*(10**-3))*1j
 Zinduc_I = np.round (Zinduc_I, 4)
 ListZinduc_I.extend(Zinduc_I)                              #Agregamos en una lista.
@@ -167,11 +164,8 @@ for i, z in combinations(range(len(busii)), 2):              #operacion para ele
         ListResistencias_I.insert (i, prueba3)
         if busii[i] == busii[z]:                             #Repetimos el proceso para los capacitores.
             Zc_I = [Zcapi [i] + Zcapi[z]]
-            del ListZcap_I[busii[i]]
-            del ListZcap_I[busii[z]-1]
-            ListZcap_I.extend (Zc_I)
-            prueba7 = ListZcap_I.pop()
-            ListZcap_I.insert (i, prueba7)
+            ListZcap_I = np.delete (ListZcap_I , [i , z])       
+            ListZcap_I = np.insert (Zc_I, i, ListZcap_I)
             if busii[i] == busii[z]:                         #Repetimos el proceso para los inductores.
                 Zinduc_i = Zinduc[i] + Zinduc[z]
                 del ListZinduc_I [busii[i]]
@@ -254,43 +248,71 @@ else:
     #Admitancias de la hoja Z
 
 
-    #Llamamos las listas ListResistencias, ListZcap, ListZinduc para calcular las Z del generador calcular las corrientes inyectadas por las fuentes de voltaje.
-    Zgen = np.sum((ListResistencias,ListZcap, ListZinduc,),axis=0)  
-    AdmitanciasGenV = (1 / Zgen)
-    AdmitanciasGenV = np.round (AdmitanciasGenV , 4)
-    Iinyectadas = np.divide (SeriesFv,Zgen)
-    Iinyectadas = np.round (Iinyectadas, 4)
+#Llamamos las listas ListResistencias, ListZcap, ListZinduc para calcular las Z del generador calcular las corrientes inyectadas por las fuentes de voltaje.
+Zgen = np.sum((ListResistencias,ListZcap, ListZinduc,),axis=0)  
+AdmitanciasGenV = (1 / Zgen)
+AdmitanciasGenV = np.round (AdmitanciasGenV , 4)
+Iinyectadas = np.divide (SeriesFv,Zgen)
+Iinyectadas = np.round (Iinyectadas, 4)
+
+Columna_i = np.array (nodos)
+Columna_j = np.full((len(nodos)), 0)
+
+#Llamamos las listas ListResistencias, Listcap, ListZinduc para calcular las Z de las fuentes de corrientes hacia el circuito.
+Zigen = np.sum((ListResistencias_I,ListZcap_I, ListZinduc_I),axis=0)  
+Ifinyectadas = np.divide (SeriesFi,Zigen)
+Ifinyectadas = np.round (Ifinyectadas, 4)
+
+#Llamamos las listas Elemncapaci, Elemeninduc, Elemenresis para calcular las Z de los elementos conectados al circuito.
+
+#Aqui saque las admitancias de la pagina Z
+
+AdminHistoria_Resis = 1/ np.array (historia_resis) 
+AdminHistoria_induc = 1/np.array (historia_induc)
+
+# Reemplazar valores cero por 1e-15
+historia_capa_sin_cero = np.where(historia_capa == 0, 1e+15, historia_capa)
+
+# Aplicar la función de inversión
+AdminHistoria_capa = 1 / historia_capa_sin_cero
+
+AdminHistoria_capa = np.round (AdminHistoria_capa, 4)
 
 
 
-    #Llamamos las listas ListResistencias, Listcap, ListZinduc para calcular las Z de las fuentes de corrientes hacia el circuito.
-    Zigen = np.sum((ListResistencias_I,ListZcap_I, ListZinduc_I),axis=0)  
-    Ifinyectadas = np.divide (SeriesFi,Zigen)
-    Ifinyectadas = np.round (Ifinyectadas, 4)
+#Admitancias de V_fuente.
 
-    #Llamamos las listas Elemncapaci, Elemeninduc, Elemenresis para calcular las Z de los elementos conectados al circuito.
+print (nodos , 'nodos')
+print (Columna_j)
+Z_totV = np.sum((ListZcap, ListZinduc, ListZinduc), axis = 0)
+print (Z_totV, "Jota")
+Z_V = np.where(Z_totV == 0, 1e+15, Z_totV)
 
-    #Aqui saque las admitancias de la pagina Z
+Y_V = 1/Z_totV
+Y_V = np.round(Y_V, 4)
+print (Y_V, 'voltaje')
 
-    AdminHistoria_Resis = 1/ np.array (historia_resis) 
-    AdminHistoria_induc = 1/np.array (historia_induc)
+#Admitancia de I_fuente:
 
-    # Reemplazar valores cero por 1e-15
-    historia_capa_sin_cero = np.where(historia_capa == 0, 1e+15, historia_capa)
+Z_totI = np.sum((ListZcap_I, ListZinduc_I, ListResistencias_I), axis = 0)
 
-    # Aplicar la función de inversión
-    AdminHistoria_capa = 1 / historia_capa_sin_cero
-
-    AdminHistoria_capa = np.round (AdminHistoria_capa, 4)
-
-#Admitancias de 
-
-
-#PLanteamos una matriz que nula, para fabricar la nueva matriz de admitancias.
-Yelemnt = np.zeros((c, c), dtype= np.complex64)
-AdminZelement = np.sum ((AdminHistoria_Resis, AdminHistoria_induc, AdminHistoria_capa), axis = 0)
-print (AdminZelement)
+Z_I = np.where(Z_totI == 0, 1e+15, Z_totI)
+print (Z_I)
 print ()
-np.fill_diagonal(Yelemnt, AdminZelement )
+Y_I = 1/Z_totI
+Y_I = np.round(Y_I, 4)
+print (Y_I, 'eror')
 
-print(Yelemnt)
+#Planteamos la Ybus:
+
+
+ybus = np.zeros((len(nodos), len(nodos)), dtype= np.complex64)
+for i in range(len(ybus)):
+     for j in range(len(ybus)):
+         if i == j:
+              ybus[i][j] = Y_V[i+1] + Y_I[i+1] #+ z_eqi[i+1] + z_eqj[j+1]
+         elif i != j:
+              ybus[i][j] = Y_V[i+1] + Y_I[i+1] #+ z_eqi[i+1] + z_eqj[i+1] + Y_V[j+1] + Y_I[j+1] + z_eqi[j+1] + z_eqj[j+1],
+
+print(ybus)
+          
